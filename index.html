@@ -3,7 +3,7 @@
 <head>
   <meta http-equiv="content-type" content="text/html;charset=utf-8">
   <title>her</title>
-  <link rel="stylesheet" href="docco.css">
+  <link rel="stylesheet" href="http://jashkenas.github.com/docco/resources/docco.css">
 </head>
 <body>
 <div id='container'>
@@ -88,9 +88,9 @@
       <span class="nb">puts</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">red</span><span class="si">}</span><span class="s2">Error</span><span class="si">#{</span><span class="n">reset</span><span class="si">}</span><span class="s2">: </span><span class="si">#{</span><span class="n">lines</span><span class="o">.</span><span class="n">shift</span><span class="si">}</span><span class="s2">&quot;</span>
       <span class="nb">puts</span> <span class="o">*</span><span class="n">lines</span> <span class="k">unless</span> <span class="n">lines</span><span class="o">.</span><span class="n">empty?</span>
     <span class="k">end</span>
-    <span class="k">def</span> <span class="nf">okay</span> <span class="n">title</span>
+    <span class="k">def</span> <span class="nf">okay</span> <span class="n">title</span><span class="p">,</span> <span class="o">&amp;</span><span class="nb">proc</span>
       <span class="nb">puts</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">blue</span><span class="si">}</span><span class="s2">==&gt;</span><span class="si">#{</span><span class="n">white</span><span class="si">}</span><span class="s2"> </span><span class="si">#{</span><span class="n">title</span><span class="si">}#{</span><span class="n">reset</span><span class="si">}</span><span class="s2">&quot;</span>
-      <span class="k">yield</span> <span class="k">if</span> <span class="nb">block_given?</span>
+      <span class="nb">proc</span><span class="o">.</span><span class="n">call</span> <span class="k">if</span> <span class="nb">proc</span>
     <span class="k">rescue</span> <span class="no">Exception</span> <span class="o">=&gt;</span> <span class="n">error</span>
       <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">red</span><span class="si">}</span><span class="s2">Error</span><span class="si">#{</span><span class="n">reset</span><span class="si">}</span><span class="s2">: &quot;</span>
       <span class="k">raise</span> <span class="n">error</span>
@@ -127,33 +127,25 @@
       <td class=code>
         <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="p">{})</span>
     <span class="n">q</span> <span class="o">=</span> <span class="sx">%Q{cd </span><span class="si">#{</span><span class="n">deploy_base</span><span class="si">}</span><span class="sx">/</span><span class="si">#{</span><span class="n">app_name</span><span class="si">}</span><span class="sx">; </span><span class="si">#{</span><span class="n">q</span><span class="si">}</span><span class="sx">}</span> <span class="k">unless</span> <span class="n">options</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="ss">:raw</span><span class="p">)</span>
-    <span class="nb">puts</span> <span class="s2">&quot;==&gt; </span><span class="si">#{</span><span class="n">q</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">visual_mode</span>
+    <span class="nb">puts</span> <span class="s2">&quot;$ </span><span class="si">#{</span><span class="n">q</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">visual_mode</span>
     <span class="k">if</span> <span class="n">options</span><span class="o">[</span><span class="ss">:data</span><span class="o">]</span>
       <span class="n">f</span> <span class="o">=</span> <span class="no">IO</span><span class="o">::</span><span class="n">popen</span> <span class="sx">%Q{ssh -q -p </span><span class="si">#{</span><span class="n">server_port</span><span class="si">}</span><span class="sx"> </span><span class="si">#{</span><span class="n">server_user</span><span class="si">}</span><span class="sx">@</span><span class="si">#{</span><span class="n">server</span><span class="si">}</span><span class="sx"> &quot;</span><span class="si">#{</span><span class="n">q</span><span class="si">}</span><span class="sx">&quot;}</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span>
       <span class="n">f</span><span class="o">.</span><span class="n">print</span> <span class="n">options</span><span class="o">[</span><span class="ss">:data</span><span class="o">]</span>
       <span class="n">f</span><span class="o">.</span><span class="n">close</span>
       <span class="vg">$?</span><span class="o">.</span><span class="n">success?</span> <span class="ow">or</span> <span class="k">raise</span> <span class="s2">&quot;Error executing: </span><span class="si">#{</span><span class="n">q</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="k">else</span>
-      <span class="nb">system</span> <span class="sx">%Q{ssh -q -t -p </span><span class="si">#{</span><span class="n">server_port</span><span class="si">}</span><span class="sx"> </span><span class="si">#{</span><span class="n">server_user</span><span class="si">}</span><span class="sx">@</span><span class="si">#{</span><span class="n">server</span><span class="si">}</span><span class="sx"> &quot;</span><span class="si">#{</span><span class="n">q</span><span class="si">}</span><span class="sx">&quot;}</span> <span class="ow">or</span>
-        <span class="k">raise</span> <span class="s2">&quot;Error executing: </span><span class="si">#{</span><span class="n">q</span><span class="si">}</span><span class="s2">&quot;</span>
+      <span class="n">out</span> <span class="o">=</span> <span class="n">visual_mode</span> <span class="p">?</span> <span class="s2">&quot;&quot;</span> <span class="p">:</span> <span class="s2">&quot;&gt; /dev/null&quot;</span>
+      <span class="n">cmd</span> <span class="o">=</span> <span class="sx">%Q{ssh -q -t -p </span><span class="si">#{</span><span class="n">server_port</span><span class="si">}</span><span class="sx"> </span><span class="si">#{</span><span class="n">server_user</span><span class="si">}</span><span class="sx">@</span><span class="si">#{</span><span class="n">server</span><span class="si">}</span><span class="sx"> &quot;</span><span class="si">#{</span><span class="n">q</span><span class="si">}</span><span class="sx">&quot; </span><span class="si">#{</span><span class="n">out</span><span class="si">}</span><span class="sx">}</span>
+      <span class="nb">system</span> <span class="n">cmd</span> <span class="ow">or</span> <span class="k">raise</span> <span class="s2">&quot;Error executing: </span><span class="si">#{</span><span class="n">q</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="k">end</span>
   <span class="k">end</span>
   <span class="k">def</span> <span class="nf">run?</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="p">{});</span> <span class="n">run</span><span class="p">(</span><span class="n">q</span><span class="p">,</span><span class="n">options</span><span class="p">)</span> <span class="k">rescue</span> <span class="kp">false</span><span class="p">;</span> <span class="k">end</span>
   <span class="k">def</span> <span class="nf">sudo</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="p">{});</span> <span class="n">run</span><span class="p">(</span><span class="s2">&quot;sudo &#39;</span><span class="si">#{</span><span class="n">q</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">);</span> <span class="k">end</span>
-  <span class="k">def</span> <span class="nf">load_configurations!</span></pre></div>
-      </td>
-    </tr>
-    <tr id='section-7'>
-      <td class=docs>
-        <div class="octowrap">
-          <a class="octothorpe" href="#section-7">#</a>
-        </div>
-        <p> Defaults</p>
-      </td>
-      <td class=code>
-        <div class='highlight'><pre>    <span class="n">server_port</span>       <span class="mi">22</span>
+  <span class="k">def</span> <span class="nf">load_configurations!</span>
+    <span class="n">server_port</span>       <span class="mi">22</span>
     <span class="n">server_user</span>       <span class="s2">&quot;www&quot;</span>
     <span class="n">deploy_base</span>       <span class="s2">&quot;/var/www&quot;</span>
+    <span class="n">git_bin</span>           <span class="s2">&quot;git&quot;</span>
     <span class="n">nginx_bin</span>         <span class="s2">&quot;/etc/init.d/nginx&quot;</span>
     <span class="n">nginx_config</span>      <span class="s2">&quot;/etc/nginx/sites-enabled&quot;</span>
     <span class="n">rails</span>             <span class="kp">true</span>
@@ -162,13 +154,15 @@
     <span class="n">env</span>               <span class="s2">&quot;production&quot;</span>
 
     <span class="nb">load</span> <span class="s2">&quot;./config/her.rb&quot;</span>
+
+    <span class="n">unicorn</span><span class="p">(</span><span class="n">unicorn</span> <span class="p">?</span> <span class="n">unicorn</span> <span class="p">:</span> <span class="n">rails</span> <span class="p">?</span> <span class="s2">&quot;unicorn_rails&quot;</span> <span class="p">:</span> <span class="s2">&quot;unicorn&quot;</span><span class="p">)</span>
   <span class="k">end</span>
 
   <span class="k">def</span> <span class="nf">exec!</span> <span class="n">args</span>
     <span class="n">visual_mode</span> <span class="n">args</span><span class="o">[</span><span class="mi">1</span><span class="o">].</span><span class="n">eql?</span><span class="p">(</span><span class="s1">&#39;-v&#39;</span><span class="p">)</span>
 
     <span class="k">case</span> <span class="n">args</span><span class="o">.</span><span class="n">shift</span>
-    <span class="k">when</span> <span class="s2">&quot;help&quot;</span><span class="p">,</span><span class="s2">&quot;h&quot;</span><span class="p">,</span><span class="kp">nil</span><span class="p">;</span> <span class="nb">puts</span> <span class="n">her_files</span><span class="o">[</span><span class="ss">:help</span><span class="o">].</span><span class="n">chomp</span>
+    <span class="k">when</span> <span class="s2">&quot;help&quot;</span><span class="p">,</span><span class="s2">&quot;h&quot;</span><span class="p">,</span><span class="kp">nil</span><span class="p">;</span> <span class="nb">puts</span> <span class="n">docs</span><span class="o">[</span><span class="ss">:help</span><span class="o">].</span><span class="n">chomp</span>
     <span class="k">when</span> <span class="s2">&quot;version&quot;</span><span class="p">,</span> <span class="s2">&quot;v&quot;</span><span class="p">;</span> <span class="nb">puts</span> <span class="no">Her</span><span class="o">::</span><span class="no">VERSION</span>
     <span class="k">when</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span><span class="s2">&quot;i&quot;</span>
 
@@ -177,7 +171,7 @@
         <span class="k">if</span> <span class="no">File</span><span class="o">.</span><span class="n">exists?</span><span class="p">(</span><span class="s2">&quot;config/</span><span class="si">#{</span><span class="n">file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
           <span class="nb">puts</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="si">#{</span><span class="no">Tty</span><span class="o">.</span><span class="n">yellow</span><span class="si">}</span><span class="s2">exists</span><span class="si">#{</span><span class="no">Tty</span><span class="o">.</span><span class="n">reset</span><span class="si">}</span><span class="s2">  config/</span><span class="si">#{</span><span class="n">file</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="k">else</span>
-          <span class="no">File</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;config/</span><span class="si">#{</span><span class="n">file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span><span class="s2">&quot;w&quot;</span><span class="p">){</span><span class="o">|</span><span class="n">f</span><span class="o">|</span><span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">her_files</span><span class="o">[</span><span class="n">file</span><span class="o">.</span><span class="n">to_sym</span><span class="o">].</span><span class="n">chomp</span><span class="p">)}</span>
+          <span class="no">File</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;config/</span><span class="si">#{</span><span class="n">file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span><span class="s2">&quot;w&quot;</span><span class="p">){</span><span class="o">|</span><span class="n">f</span><span class="o">|</span><span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">docs</span><span class="o">[</span><span class="n">file</span><span class="o">.</span><span class="n">to_sym</span><span class="o">].</span><span class="n">chomp</span><span class="p">)}</span>
           <span class="nb">puts</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="si">#{</span><span class="no">Tty</span><span class="o">.</span><span class="n">green</span><span class="si">}</span><span class="s2">create</span><span class="si">#{</span><span class="no">Tty</span><span class="o">.</span><span class="n">reset</span><span class="si">}</span><span class="s2">  config/</span><span class="si">#{</span><span class="n">file</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="k">end</span>
       <span class="k">end</span>
@@ -185,20 +179,20 @@
     <span class="k">when</span> <span class="s2">&quot;exec&quot;</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span>
 
       <span class="n">load_configurations!</span>
-
       <span class="n">run</span> <span class="n">args</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
 
     <span class="k">when</span> <span class="s2">&quot;deploy&quot;</span><span class="p">,</span><span class="s2">&quot;d&quot;</span>
 
       <span class="no">Tty</span><span class="o">.</span><span class="n">okay</span> <span class="s2">&quot;Reading configuration file&quot;</span> <span class="k">do</span>
-
         <span class="n">load_configurations!</span>
-
+        <span class="o">[</span><span class="ss">:cat</span><span class="p">,</span> <span class="ss">:xargs</span><span class="p">,</span> <span class="n">git_bin</span><span class="p">,</span> <span class="n">nginx_bin</span><span class="o">].</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">command</span><span class="o">|</span>
+          <span class="n">run?</span><span class="p">(</span><span class="s2">&quot;which </span><span class="si">#{</span><span class="n">command</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="ss">:raw</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">)</span> <span class="ow">or</span>
+            <span class="k">raise</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">command</span><span class="si">}</span><span class="s2"> doesn&#39;t exist on remote server&quot;</span>
+        <span class="k">end</span>
       <span class="k">end</span>
 
       <span class="no">Tty</span><span class="o">.</span><span class="n">okay</span> <span class="s2">&quot;Connecting to </span><span class="si">#{</span><span class="n">server</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">do</span>
         <span class="k">unless</span> <span class="n">run?</span><span class="p">(</span><span class="s2">&quot;[[ -e </span><span class="si">#{</span><span class="n">deploy_base</span><span class="si">}</span><span class="s2">/</span><span class="si">#{</span><span class="n">app_name</span><span class="si">}</span><span class="s2"> ]]&quot;</span><span class="p">,</span> <span class="ss">:raw</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">)</span>
-          <span class="n">run</span> <span class="s2">&quot;&quot;</span>
           <span class="n">run</span> <span class="s2">&quot;mkdir -p </span><span class="si">#{</span><span class="n">deploy_base</span><span class="si">}</span><span class="s2">/</span><span class="si">#{</span><span class="n">app_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="ss">:raw</span> <span class="o">=&gt;</span> <span class="kp">true</span>
           <span class="n">is_first_deploy</span> <span class="kp">true</span>
         <span class="k">end</span>
@@ -206,30 +200,28 @@
 
       <span class="no">Tty</span><span class="o">.</span><span class="n">okay</span> <span class="s2">&quot;Uploading nginx configuration&quot;</span> <span class="k">do</span>
         <span class="n">run</span> <span class="s2">&quot;cat &gt; </span><span class="si">#{</span><span class="n">nginx_config</span><span class="si">}</span><span class="s2">/</span><span class="si">#{</span><span class="n">app_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-          <span class="ss">:data</span> <span class="o">=&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&quot;</span><span class="si">#{</span><span class="n">her_files</span><span class="o">[</span><span class="ss">:nginx_config</span><span class="o">].</span><span class="n">chomp</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">),</span>
+          <span class="ss">:data</span> <span class="o">=&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&quot;</span><span class="si">#{</span><span class="n">docs</span><span class="o">[</span><span class="ss">:nginx_config</span><span class="o">].</span><span class="n">chomp</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">),</span>
           <span class="ss">:raw</span> <span class="o">=&gt;</span> <span class="kp">true</span>
       <span class="k">end</span>                                             <span class="k">if</span> <span class="n">is_first_deploy</span>
-      <span class="no">Tty</span><span class="o">.</span><span class="n">okay</span> <span class="s2">&quot;Cloning repository&quot;</span> <span class="k">do</span>
-        <span class="n">run</span> <span class="s2">&quot;/usr/local/bin/git clone </span><span class="si">#{</span><span class="n">repository</span><span class="si">}</span><span class="s2"> . &amp;&amp; /usr/local/bin/git checkout -b her_deployment -t origin/</span><span class="si">#{</span><span class="n">branch</span><span class="si">}</span><span class="s2">&quot;</span>
-      <span class="k">end</span>                                             <span class="k">if</span> <span class="n">is_first_deploy</span>
 
+      <span class="no">Tty</span><span class="o">.</span><span class="n">okay</span> <span class="s2">&quot;Cloning repository&quot;</span> <span class="k">do</span>
+        <span class="n">run</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">git_bin</span><span class="si">}</span><span class="s2"> clone </span><span class="si">#{</span><span class="n">repository</span><span class="si">}</span><span class="s2"> . &amp;&amp; </span><span class="si">#{</span><span class="n">git_bin</span><span class="si">}</span><span class="s2"> checkout -b her_deployment -t origin/</span><span class="si">#{</span><span class="n">branch</span><span class="si">}</span><span class="s2">&quot;</span>
+      <span class="k">end</span>                                             <span class="k">if</span> <span class="n">is_first_deploy</span>
       <span class="no">Tty</span><span class="o">.</span><span class="n">okay</span> <span class="s2">&quot;Pulling code changes&quot;</span> <span class="k">do</span>
-        <span class="n">run</span> <span class="s2">&quot;/usr/local/bin/git pull </span><span class="si">#{</span><span class="n">repository</span><span class="si">}</span><span class="s2"> . &amp;&amp; /usr/local/bin/git pull origin </span><span class="si">#{</span><span class="n">branch</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">run</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">git_bin</span><span class="si">}</span><span class="s2"> pull&quot;</span>
       <span class="k">end</span>                                             <span class="k">unless</span> <span class="n">is_first_deploy</span>
 
-      <span class="no">Tty</span><span class="o">.</span><span class="n">okay</span> <span class="s2">&quot;Running on_first_deploy callback&quot;</span> <span class="k">do</span>
-        <span class="n">on_first_deploy</span><span class="o">.</span><span class="n">call</span>
-      <span class="k">end</span>                                             <span class="k">if</span> <span class="n">is_first_deploy</span>
-
-      <span class="no">Tty</span><span class="o">.</span><span class="n">okay</span> <span class="s2">&quot;Running on_deploy callback&quot;</span> <span class="k">do</span>
-        <span class="n">on_deploy</span><span class="o">.</span><span class="n">call</span>
-      <span class="k">end</span>
+      <span class="no">Tty</span><span class="o">.</span><span class="n">okay</span> <span class="s2">&quot;Running on_first_deploy callback&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">on_first_deploy</span> <span class="k">if</span> <span class="n">is_first_deploy</span>
+      <span class="no">Tty</span><span class="o">.</span><span class="n">okay</span> <span class="s2">&quot;Running on_deploy callback&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">on_deploy</span>
 
       <span class="no">Tty</span><span class="o">.</span><span class="n">okay</span> <span class="s2">&quot;Starting unicorn&quot;</span> <span class="k">do</span>
-        <span class="n">run</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">rails</span> <span class="p">?</span> <span class="s1">&#39;unicorn_rails&#39;</span> <span class="p">:</span> <span class="s1">&#39;unicorn&#39;</span><span class="si">}</span><span class="s2"> -D -c config/unicorn.rb -E </span><span class="si">#{</span><span class="n">env</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">run</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">unicorn</span><span class="si">}</span><span class="s2"> -D -c config/unicorn.rb -E </span><span class="si">#{</span><span class="n">env</span><span class="si">}</span><span class="s2">&quot;</span>
       <span class="k">end</span>                                             <span class="k">if</span> <span class="n">is_first_deploy</span>
       <span class="no">Tty</span><span class="o">.</span><span class="n">okay</span> <span class="s2">&quot;Reloading unicorn&quot;</span> <span class="k">do</span>
-        <span class="n">run</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">rails</span> <span class="p">?</span> <span class="s1">&#39;unicorn_rails&#39;</span> <span class="p">:</span> <span class="s1">&#39;unicorn&#39;</span><span class="si">}</span><span class="s2"> -D -C config/unicorn.rb&quot;</span>
+        <span class="n">run</span> <span class="s2">&quot;cat tmp/pids/unicorn.pid | xargs kill -SIGUSR2&quot;</span>
+        <span class="nb">print</span> <span class="s2">&quot;If your app respond correctly [Y/n]: &quot;</span>
+        <span class="n">pid</span> <span class="o">=</span> <span class="nb">gets</span><span class="o">.</span><span class="n">chomp</span><span class="o">.</span><span class="n">eql?</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">)</span> <span class="p">?</span> <span class="s2">&quot;unicorn.pid&quot;</span> <span class="p">:</span> <span class="s2">&quot;unicorn.pid.oldbin&quot;</span>
+        <span class="n">run</span> <span class="s2">&quot;cat tmp/pids/</span><span class="si">#{</span><span class="n">pid</span><span class="si">}</span><span class="s2"> | xargs kill -SIGQUIT&quot;</span>
       <span class="k">end</span>                                             <span class="k">unless</span> <span class="n">is_first_deploy</span>
       <span class="no">Tty</span><span class="o">.</span><span class="n">okay</span> <span class="s2">&quot;Reloading nginx&quot;</span> <span class="k">do</span>
         <span class="n">sudo</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">nginx_bin</span><span class="si">}</span><span class="s2"> reload&quot;</span>
@@ -242,11 +234,11 @@
   <span class="kp">private</span>
 
   <span class="k">def</span> <span class="nf">load_inline_files!</span>
-    <span class="n">file</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">;</span> <span class="n">her_files</span><span class="p">(</span><span class="no">Hash</span><span class="o">.</span><span class="n">new</span><span class="p">)</span>
-  
+    <span class="n">file</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">;</span> <span class="n">docs</span><span class="p">(</span><span class="no">Hash</span><span class="o">.</span><span class="n">new</span><span class="p">)</span>
+
     <span class="o">::</span><span class="no">DATA</span><span class="o">.</span><span class="n">each_line</span> <span class="k">do</span> <span class="o">|</span><span class="n">ln</span><span class="o">|</span>
       <span class="k">if</span> <span class="n">ln</span> <span class="o">=~</span> <span class="sr">/^@@\s*(.*\S)\s*$/</span>
-        <span class="n">her_files</span><span class="o">[</span><span class="vg">$1</span><span class="o">.</span><span class="n">to_sym</span><span class="o">]</span> <span class="o">=</span> <span class="n">file</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">docs</span><span class="o">[</span><span class="vg">$1</span><span class="o">.</span><span class="n">to_sym</span><span class="o">]</span> <span class="o">=</span> <span class="n">file</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
       <span class="k">else</span>
         <span class="n">file</span> <span class="o">&lt;&lt;</span> <span class="n">ln</span>
       <span class="k">end</span>
@@ -264,7 +256,8 @@
                  <span class="ss">:nginx_bin</span><span class="p">,</span> <span class="ss">:nginx_config</span><span class="p">,</span>
                  <span class="ss">:on_deploy</span><span class="p">,</span> <span class="ss">:on_first_deploy</span><span class="p">,</span> <span class="ss">:is_first_deploy</span><span class="p">,</span>
                  <span class="ss">:rails</span><span class="p">,</span> <span class="ss">:env</span><span class="p">,</span>
-                 <span class="ss">:visual_mode</span><span class="p">,</span> <span class="ss">:her_files</span>
+                 <span class="ss">:visual_mode</span><span class="p">,</span> <span class="ss">:docs</span><span class="p">,</span>
+                 <span class="ss">:git_bin</span><span class="p">,</span> <span class="ss">:unicorn</span>
 <span class="k">end</span>
 
 <span class="k">if</span> <span class="no">File</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="bp">__FILE__</span><span class="p">)</span> <span class="o">==</span> <span class="no">File</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="vg">$0</span><span class="p">)</span>
@@ -296,10 +289,10 @@
 <span class="cp">app_name    &quot;myapp&quot;</span></pre></div>
       </td>
     </tr>
-    <tr id='section-8'>
+    <tr id='section-7'>
       <td class=docs>
         <div class="octowrap">
-          <a class="octothorpe" href="#section-8">#</a>
+          <a class="octothorpe" href="#section-7">#</a>
         </div>
         <p> By default we deploy to /var/www
  deploy_base &ldquo;/var/www&rdquo;</p>
@@ -322,22 +315,22 @@
 <span class="cp">working_directory APP_PATH</span></pre></div>
       </td>
     </tr>
-    <tr id='section-9'>
+    <tr id='section-8'>
       <td class=docs>
         <div class="octowrap">
-          <a class="octothorpe" href="#section-9">#</a>
+          <a class="octothorpe" href="#section-8">#</a>
         </div>
         <p> listen on both a Unix domain socket and a TCP port,
  we use a shorter backlog for quicker failover when busy</p>
       </td>
       <td class=code>
-        <div class='highlight'><pre><span class="cp">listen APP_PATH + &quot;tmp/.sock&quot;, :backlog =&gt; 64</span></pre></div>
+        <div class='highlight'><pre><span class="cp">listen APP_PATH + &quot;tmp/sockets/unicorn.sock&quot;, :backlog =&gt; 64</span></pre></div>
       </td>
     </tr>
-    <tr id='section-10'>
+    <tr id='section-9'>
       <td class=docs>
         <div class="octowrap">
-          <a class="octothorpe" href="#section-10">#</a>
+          <a class="octothorpe" href="#section-9">#</a>
         </div>
         <p> nuke workers after 30 seconds instead of 60 seconds (the default)</p>
       </td>
@@ -345,10 +338,10 @@
         <div class='highlight'><pre><span class="cp">timeout 30</span></pre></div>
       </td>
     </tr>
-    <tr id='section-11'>
+    <tr id='section-10'>
       <td class=docs>
         <div class="octowrap">
-          <a class="octothorpe" href="#section-11">#</a>
+          <a class="octothorpe" href="#section-10">#</a>
         </div>
         <p> feel free to point this anywhere accessible on the filesystem</p>
       </td>
@@ -374,10 +367,10 @@
 <span class="cp">upstream #{app_name}_server {</span></pre></div>
       </td>
     </tr>
-    <tr id='section-12'>
+    <tr id='section-11'>
       <td class=docs>
         <div class="octowrap">
-          <a class="octothorpe" href="#section-12">#</a>
+          <a class="octothorpe" href="#section-11">#</a>
         </div>
         <p> This is the socket we configured in unicorn.rb</p>
       </td>
@@ -388,15 +381,15 @@
 
 <span class="cp">server {</span>
 <span class="cp">    listen 80;</span>
-<span class="cp">    server_name #{server};</span>
+<span class="cp">    server_name #{app_url};</span>
 
 <span class="cp">    keepalive_timeout 5;</span></pre></div>
       </td>
     </tr>
-    <tr id='section-13'>
+    <tr id='section-12'>
       <td class=docs>
         <div class="octowrap">
-          <a class="octothorpe" href="#section-13">#</a>
+          <a class="octothorpe" href="#section-12">#</a>
         </div>
         <p> Location of our static files</p>
       </td>
@@ -409,10 +402,10 @@
 <span class="cp">      proxy_redirect off;</span></pre></div>
       </td>
     </tr>
-    <tr id='section-14'>
+    <tr id='section-13'>
       <td class=docs>
         <div class="octowrap">
-          <a class="octothorpe" href="#section-14">#</a>
+          <a class="octothorpe" href="#section-13">#</a>
         </div>
         <p> If you don&rsquo;t find the filename in the static files
  Then request it from the telus_unicorn server</p>
