@@ -1,0 +1,295 @@
+#!/usr/bin/env ruby
+
+# **her** is an easy to use deployment tool. It assumes that you are using nginx
+# together with <a href='http://google.com?q=unicorn'>unicorn</a>.
+
+#### Workflow
+#    her init
+# (this generates all configuration files in config folder of your project)
+
+# FileUtils are used to initialize *her* in the project directory
+%w{fileutils}.each { |lib| require lib }
+
+lib = File.expand_path('../lib', File.dirname(__FILE__))
+$:.unshift lib unless $:.include?(lib)
+require 'her/version'
+
+# Tty class is inspired by Homebrew Tty class. It is used for almost all output.
+#
+# `onoe` prints an error if one arose.
+# `okay` tries to execute a block
+class Tty
+  class << self
+    def onoe error
+      lines = error.to_s.split"\n"
+      puts "#{red}Error#{reset}: #{lines.shift}"
+      puts *lines unless lines.empty?
+    end
+    def okay title, &proc
+      puts "#{blue}==>#{white} #{title}#{reset}"
+      proc.call if proc
+    rescue Exception => error
+      print "#{red}Error#{reset}: "
+      raise error
+    end
+    def blue; bold 34; end
+    def white; bold 39; end
+    def red; underline 31; end
+    def yellow; escape 33 ; end
+    def green; escape 32 ; end
+    def reset; escape 0; end
+    def em; underline 39; end
+    def color n; escape "0;#{n}"; end
+    def bold n; escape "1;#{n}"; end
+    def underline n; escape "4;#{n}"; end
+    def escape n; "\033[#{n}m" if $stdout.tty?; end
+  end
+end
+
+module Her
+  # options:
+  #
+  # -   :raw    - (bool)    don't prepend "cd #{deploy_base}/#{app_name}; "
+  # -   :data   - (string)  send data to STDIN when asked
+  def run(q, options = {})
+    q = %Q{cd #{deploy_base}/#{app_name}; #{q}} unless options.delete(:raw)
+    puts "$ #{q}" if visual_mode
+    if options[:data]
+      f = IO::popen %Q{ssh -q -p #{server_port} #{server_user}@#{server} "#{q}"}, 'w'
+      f.print options[:data]
+      f.close
+      $?.success? or raise "Error executing: #{q}"
+    else
+      out = visual_mode ? "" : "> /dev/null"
+      cmd = %Q{ssh -q -t -p #{server_port} #{server_user}@#{server} "#{q}" #{out}}
+      system cmd or raise "Error executing: #{q}"
+    end
+  end
+  def run?(q, options = {}); run(q,options) rescue false; end
+  def sudo(q, options = {}); run("sudo '#{q}'"); end
+  def load_configurations!
+    server_port       22
+    server_user       "www"
+    deploy_base       "/var/www"
+    git_bin           "git"
+    nginx_bin         "/etc/init.d/nginx"
+    nginx_config      "/etc/nginx/sites-enabled"
+    rails             true
+    is_first_deploy   false
+    branch            "master"
+    env               "production"
+
+    load "./config/her.rb"
+
+    unicorn(unicorn ? unicorn : rails ? "unicorn_rails" : "unicorn")
+  end
+
+  def exec! args
+    visual_mode args[1].eql?('-v')
+
+    case args.shift
+    when "help","h",nil; puts docs[:help].chomp
+    when "version", "v"; puts Her::VERSION
+    when "init","i"
+
+      FileUtils.mkdir_p("config")
+      ["unicorn.rb", "her.rb"].each do |file|
+        if File.exists?("config/#{file}")
+          puts "\t#{Tty.yellow}exists#{Tty.reset}  config/#{file}"
+        else
+          File.open("config/#{file}","w"){|f|f.write(docs[file.to_sym].chomp)}
+          puts "\t#{Tty.green}create#{Tty.reset}  config/#{file}"
+        end
+      end
+
+    when "exec", "e"
+
+      load_configurations!
+      run args.join(' ')
+
+    when "deploy","d"
+
+      Tty.okay "Reading configuration file" do
+        load_configurations!
+        [:cat, :xargs, git_bin, nginx_bin].each do |command|
+          run?("which #{command}", :raw => true) or
+            raise "#{command} doesn't exist on remote server"
+        end
+      end
+
+      Tty.okay "Connecting to #{server}" do
+        unless run?("[[ -e #{deploy_base}/#{app_name} ]]", :raw => true)
+          run "mkdir -p #{deploy_base}/#{app_name}", :raw => true
+          is_first_deploy true
+        end
+      end
+
+      Tty.okay "Uploading nginx configuration" do
+        run "cat > #{nginx_config}/#{app_name}",
+          :data => eval("\"#{docs[:nginx_config].chomp}\""),
+          :raw => true
+      end                                             if is_first_deploy
+
+      Tty.okay "Cloning repository" do
+        run "#{git_bin} clone #{repository} . && #{git_bin} checkout -b her_deployment -t origin/#{branch}"
+      end                                             if is_first_deploy
+      Tty.okay "Pulling code changes" do
+        run "#{git_bin} pull"
+      end                                             unless is_first_deploy
+
+      Tty.okay "Running on_first_deploy callback", &on_first_deploy if is_first_deploy
+      Tty.okay "Running on_deploy callback", &on_deploy
+
+      Tty.okay "Starting unicorn" do
+        run "#{unicorn} -D -c config/unicorn.rb -E #{env}"
+      end                                             if is_first_deploy
+      Tty.okay "Reloading unicorn" do
+        run "cat tmp/pids/unicorn.pid | xargs kill -SIGUSR2"
+        print "If your app respond correctly [Y/n]: "
+        pid = gets.chomp.eql?("n") ? "unicorn.pid" : "unicorn.pid.oldbin"
+        run "cat tmp/pids/#{pid} | xargs kill -SIGQUIT"
+      end                                             unless is_first_deploy
+      Tty.okay "Reloading nginx" do
+        sudo "#{nginx_bin} reload"
+      end                                             if is_first_deploy
+
+    else Tty.onoe("Unknown command. Run 'her help' for usage.")
+    end
+  end
+
+  private
+
+  def load_inline_files!
+    file = ""; docs(Hash.new)
+
+    ::DATA.each_line do |ln|
+      if ln =~ /^@@\s*(.*\S)\s*$/
+        docs[$1.to_sym] = file = ""
+      else
+        file << ln
+      end
+    end
+  end
+
+  def self.enable_options(*opts)
+    opts.each{|op| eval"def #{op}(v = @#{op}, &b); @#{op} = b || v; end"}
+  end
+
+  enable_options :server, :server_port, :server_user,
+                 :repository, :branch,
+                 :app_url, :app_name,
+                 :deploy_base,
+                 :nginx_bin, :nginx_config,
+                 :on_deploy, :on_first_deploy, :is_first_deploy,
+                 :rails, :env,
+                 :visual_mode, :docs,
+                 :git_bin, :unicorn
+end
+
+if File.basename(__FILE__) == File.basename($0)
+  args = ARGV.dup
+  ARGV.clear
+
+  include Her
+  load_inline_files!
+  exec! args
+end
+
+__END__
+
+@@ help
+Usage: her <command> [-v] ...
+
+init                  # Generate configuration files (run once)
+deploy                # Deploy to server
+rake <task> <tast>    # Run rake command on the server
+
+== Others ==
+help                  # Show this screen
+version               # Show version number
+
+@@ her.rb
+server      "myserver.com"
+repository  "git@github.com:pitr/rails3-app.git"
+app_url     "myapp.company.com"
+app_name    "myapp"
+
+# By default we deploy to /var/www
+# deploy_base "/var/www"
+
+on_deploy do
+  run "bundle install --deployment"
+  run "RAILS_ENV=production rake db:migrate"
+end
+
+on_first_deploy do
+  run "RAILS_ENV=production rake db:seed"
+end
+
+@@ unicorn.rb
+APP_PATH = Dir.pwd + '/'
+
+worker_processes 4
+
+working_directory APP_PATH
+
+# listen on both a Unix domain socket and a TCP port,
+# we use a shorter backlog for quicker failover when busy
+listen APP_PATH + "tmp/sockets/unicorn.sock", :backlog => 64
+
+# nuke workers after 30 seconds instead of 60 seconds (the default)
+timeout 30
+
+# feel free to point this anywhere accessible on the filesystem
+pid APP_PATH + "tmp/pids/unicorn.pid"
+
+stderr_path APP_PATH + "log/unicorn.stderr.log"
+stdout_path APP_PATH + "log/unicorn.stdout.log"
+
+preload_app true
+
+GC.respond_to?(:copy_on_write_friendly=) and GC.copy_on_write_friendly = true
+
+before_fork do |server, worker|
+  defined?(ActiveRecord::Base) and ActiveRecord::Base.connection.disconnect!
+end
+
+after_fork do |server, worker|
+  defined?(ActiveRecord::Base) and ActiveRecord::Base.establish_connection
+end
+
+@@ nginx_config
+upstream #{app_name}_server {
+   # This is the socket we configured in unicorn.rb
+   server unix:#{File.expand_path(deploy_base)}/#{app_name}/tmp/sockets/unicorn.sock
+   fail_timeout=0;
+}
+
+server {
+    listen 80;
+    server_name #{app_url};
+
+    keepalive_timeout 5;
+
+    # Location of our static files
+    root #{File.expand_path(deploy_base)}/#{app_name}/public;
+
+    location / {
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header Host $http_host;
+      proxy_redirect off;
+
+      # If you don't find the filename in the static files
+      # Then request it from the telus_unicorn server
+      if (!-f $request_filename) {
+        proxy_pass http://#{app_name}_server;
+        break;
+      }
+    }
+
+    error_page 500 502 503 504 /500.html;
+    location = /500.html {
+      root #{File.expand_path(deploy_base)}/#{app_name}/public;
+    }
+}
+
