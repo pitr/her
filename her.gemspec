@@ -2,7 +2,7 @@
 lib = File.expand_path('../lib/', __FILE__)
 $:.unshift lib unless $:.include?(lib)
 
-require 'her/version'
+require 'her'
 
 Gem::Specification.new do |s|
   s.name        = "her"
@@ -12,10 +12,10 @@ Gem::Specification.new do |s|
   s.email       = ["pitr.vern@gmail.com"]
   s.homepage    = "http://pitr.github.com/her"
   s.summary     = "Full featured deployment tool in 200 lines of ruby code"
-  s.description = "Deploys your rack app in a git repository to a unix server with nginx and unicorn"
+  s.description = "Deploys your rack app to a unix server with nginx and unicorn"
 
   s.add_development_dependency "rocco"
 
-  s.files        = %w(bin/her lib/her/version.rb index.html README)
-  s.executable   = 'her'
+  s.files       = %w(bin/her lib/her.rb README)
+  s.executable  = 'her'
 end
