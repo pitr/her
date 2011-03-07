@@ -12,7 +12,7 @@
 
 lib = File.expand_path('../lib', File.dirname(__FILE__))
 $:.unshift lib unless $:.include?(lib)
-require 'her/version'
+require 'her'
 
 # Tty class is inspired by Homebrew Tty class. It is used for almost all output.
 #
