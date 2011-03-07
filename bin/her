@@ -48,7 +48,6 @@ end
 
 module Her
   def run(q, options = {})
-    q = %Q{cd #{deploy_base}/#{app_name}; #{q}} unless options.delete(:raw)
     puts "$ #{q}"
     system q or raise "Error executing: #{q}"
   end
@@ -103,6 +102,10 @@ module Her
 
       Tty.okay "Running on_first_deploy callback", &on_first_deploy if is_first_deploy
       Tty.okay "Running on_deploy callback", &on_deploy
+
+      Tty.okay "Remapping current" do
+        run "ln -nsf #{rev_root} #{app_root}/current"
+      end
 
       Tty.okay "Reloading unicorn" do
         run "cat tmp/pids/unicorn.pid | xargs kill -SIGUSR2"
