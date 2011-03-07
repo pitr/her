@@ -108,8 +108,7 @@ module Her
       end
 
       Tty.okay "Reloading unicorn" do
-        run "cat tmp/pids/unicorn.pid | xargs kill -SIGUSR2"
-        run "kill -USR2 `cat $UNICORN_PID`"
+        run "cat #{shared_root}/tmp/pids/unicorn.pid | xargs kill -SIGUSR2"
       end                                             unless is_first_deploy
 
     else Tty.onoe("Unknown command. Run 'her help' for usage.")
